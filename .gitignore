@@ -1,0 +1,12 @@
+# Ambientes Virtuais
+erp_env/
+env/
+venv/
+
+# Arquivos de Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Opcional: Se não quiser subir o banco de dados com seus dados reais, descomente a linha abaixo
+# db.sqlite3

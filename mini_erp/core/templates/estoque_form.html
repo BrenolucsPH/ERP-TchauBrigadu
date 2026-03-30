@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="card shadow-sm mx-auto mt-4" style="max-width: 500px;">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">📦 Gerenciar Estoque: {{ produto.nome }}</h5>
+    </div>
+    <div class="card-body text-center">
+        
+        <p class="mb-4">Quantidade atual em estoque: <strong>{{ estoque.quantidade }}</strong></p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3 text-start">
+                <label class="form-label fw-bold">Nova Quantidade Total:</label>
+                {{ form.quantidade }}
+            </div>
+            
+            <hr class="mt-4">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'painel' %}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-info text-white">💾 Atualizar Estoque</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

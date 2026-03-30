@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<!-- O data-bs-theme="dark" é o que ativa a magia das cores escuras nativas! -->
+<html lang="pt-br" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP - Tchau Brigadu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Nova Biblioteca de Ícones Profissionais -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+                background-color: #131314; /* Cor de fundo estilo Gemini */
+                color: #e3e3e3;
+                display: flex;
+                height: 100vh;
+                overflow: hidden;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        /* A Nova Barra Lateral */
+            .sidebar {
+                width: 260px;
+                background-color: #1e1f20;
+                border-right: 1px solid #333;
+                display: flex;
+                flex-direction: column;
+                padding: 20px 10px;
+        }
+        
+            .sidebar-brand {
+                font-size: 1.3rem;
+                font-weight: 600;
+                color: #fff;
+                margin-bottom: 30px;
+                padding-left: 15px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+        }
+        
+            .nav-link {
+                color: #c4c7c5;
+                border-radius: 8px;
+                margin-bottom: 5px;
+                padding: 10px 15px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-weight: 500;
+                transition: all 0.2s;
+        }
+        
+            .nav-link:hover {
+                background-color: #333538;
+                color: #fff;
+        }
+        
+            .nav-link.active {
+                background-color: #414345;
+                color: #fff;
+        }
+        
+        /* A Área Central */
+            .main-content {
+                flex-grow: 1;
+                overflow-y: auto;
+                padding: 30px 40px;
+                background-color: #131314;
+        }
+        
+        /* Ajustes dos Cards para o Modo Escuro */
+            .card {
+                background-color: #1e1f20;
+                border: 1px solid #333;
+                border-radius: 12px;
+        }
+        
+            .table {
+                --bs-table-bg: transparent;
+                --bs-table-color: #e3e3e3;
+                --bs-table-border-color: #333;
+        }
+
+         /* CSS DA BARRA LATERAL RETRÁTIL */
+        .sidebar { 
+        transition: width 0.3s ease; 
+        width: 250px; 
+        overflow-x: hidden; 
+        white-space: nowrap; 
+        flex-shrink: 0; /* Impede a barra de ser esmagada */
+    }
+    
+    /* Quando encolhido */
+    .sidebar.collapsed { width: 75px; }
+    
+    /* Esconde textos, busca e rodapé quando encolhido */
+    .sidebar.collapsed .nav-text, 
+    .sidebar.collapsed .sidebar-brand-text,
+    .sidebar.collapsed .search-box,
+    .sidebar.collapsed .hide-collapsed { display: none !important; }
+    
+    /* Centraliza os ícones perfeitamente */
+    .sidebar.collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; }
+    .sidebar.collapsed .nav-link i { margin-right: 0 !important; font-size: 1.4rem; }
+    
+    /* Arruma o topo */
+    .sidebar.collapsed .sidebar-brand { justify-content: center !important; margin-bottom: 2rem !important; }
+    .sidebar.collapsed .sidebar-brand a { display: none !important; }
+    
+    .toggle-btn { cursor: pointer; color: #c4c7c5; background: transparent; border: none; padding: 0; }
+    .toggle-btn:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar d-flex flex-column" id="sidebar">
+
+        <script>
+            if (localStorage.getItem('sidebarState') === 'collapsed') {
+                document.getElementById('sidebar').classList.add('collapsed');
+            }
+        </script>
+        
+        <!-- Logo e Botão de Encolher -->
+        <div class="sidebar-brand d-flex justify-content-between align-items-center w-100 px-3 mt-3 mb-4">
+            <a href="{% url 'painel' %}" class="text-decoration-none text-white d-flex align-items-center">
+                <i class="bi bi-box-seam text-primary me-2 fs-4"></i>
+                <span class="sidebar-brand-text fw-bold fs-5">Tchau Brigadu</span>
+            </a>
+            <button id="toggleSidebar" class="toggle-btn"><i class="bi bi-list fs-3"></i></button>
+        </div>
+
+        <!-- Barra de Pesquisa Global -->
+        <div class="search-box px-3 mb-4">
+            <form action="{% url 'painel' %}" method="GET" class="d-flex">
+                <input type="text" name="q" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Buscar produto..." value="{{ busca|default_if_none:'' }}">
+                <button type="submit" class="btn btn-primary btn-sm ms-1"><i class="bi bi-search"></i></button>
+            </form>
+        </div>
+
+        <!-- Menu de Navegação -->
+        <nav class="nav flex-column mb-auto px-2">
+            <a class="nav-link rounded mb-1 {% if request.resolver_match.url_name == 'painel' %}active bg-primary text-white{% else %}text-muted{% endif %}" href="{% url 'painel' %}">
+                <i class="bi bi-grid-1x2 me-2"></i> <span class="nav-text">Painel Inicial</span>
+            </a>
+            <a class="nav-link rounded mb-1 {% if request.resolver_match.url_name == 'novo_apontamento' %}active bg-primary text-white{% else %}text-muted{% endif %}" href="{% url 'novo_apontamento' %}">
+                <i class="bi bi-hammer me-2"></i> <span class="nav-text">Apontar Produção</span>
+            </a>
+            <a class="nav-link rounded mb-1 {% if request.resolver_match.url_name == 'historico_producao' %}active bg-primary text-white{% else %}text-muted{% endif %}" href="{% url 'historico_producao' %}">
+                <i class="bi bi-clock-history me-2"></i> <span class="nav-text">Histórico</span>
+            </a>
+        </nav>
+        
+        <!-- Rodapé da Barra Lateral -->
+        <!-- Rodapé da Barra Lateral -->
+        <div class="mt-auto px-3 pb-4 border-top border-secondary pt-3">
+            <div class="d-flex align-items-center mb-3 text-muted">
+                <i class="bi bi-person-circle text-secondary fs-5 me-2"></i>
+                <span class="hide-collapsed fw-bold">{{ user.username }}</span>
+            </div>
+            
+            <!-- NOVO BOTÃO DE BACKUP (Apenas para Admin) -->
+            {% if user.is_superuser %}
+            <a href="{% url 'backup_banco' %}" class="text-info text-decoration-none d-flex align-items-center mb-3" title="Baixar Backup">
+                <i class="bi bi-cloud-arrow-down fs-5 me-2"></i>
+                <span class="hide-collapsed">Backup do Sistema</span>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'logout' %}" class="text-danger text-decoration-none d-flex align-items-center" title="Sair">
+                <i class="bi bi-box-arrow-left fs-5 me-2"></i>
+                <span class="hide-collapsed">Sair do Sistema</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        {% block conteudo %}
+        {% endblock %}
+    </div>
+
+    <!-- CONTAINER DE NOTIFICAÇÕES (TOASTS) -->
+    <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+        {% if messages %}
+            {% for message in messages %}
+                <!-- A cor da borda muda se for sucesso (success) ou erro (danger) -->
+                <div class="toast align-items-center bg-dark text-light border-0 border-start border-4 shadow-lg mb-2 
+                    {% if message.tags == 'error' %}border-danger{% elif message.tags == 'success' %}border-success{% else %}border-info{% endif %}" 
+                    role="alert" aria-live="assertive" aria-atomic="true">
+                    
+                    <div class="d-flex py-1">
+                        <div class="toast-body fw-bold fs-6">
+                            {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill text-success me-2 fs-5"></i>{% endif %}
+                            {% if message.tags == 'error' %}<i class="bi bi-exclamation-octagon-fill text-danger me-2 fs-5"></i>{% endif %}
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Ativador Automático de Toasts
+        document.addEventListener('DOMContentLoaded', function () {
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            var toastList = toastElList.map(function (toastEl) {
+                // delay: 4000 significa que vai sumir sozinho em 4 segundos
+                return new bootstrap.Toast(toastEl, { delay: 4000 });
+            });
+            toastList.forEach(toast => toast.show());
+        });
+    </script>
+
+    <script>
+        // Lógica do Botão da Barra Lateral (O carregamento inicial agora é feito lá em cima)
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggleSidebar');
+
+            // Ação de clique no botão (hamburger)
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('collapsed');
+                    
+                    // Salva a preferência na memória do navegador
+                    if (sidebar.classList.contains('collapsed')) {
+                        localStorage.setItem('sidebarState', 'collapsed');
+                    } else {
+                        localStorage.setItem('sidebarState', 'expanded');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

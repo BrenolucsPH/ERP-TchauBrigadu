@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Relatório de Estoque</title>
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 1.5cm;
+        }
+        body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #333; }
+        .cabecalho { text-align: center; margin-bottom: 30px; }
+        .cabecalho h1 { margin: 0; font-size: 24px; color: #0d6efd; }
+        .cabecalho p { margin: 5px 0 0 0; color: #666; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f8f9fa; font-weight: bold; text-transform: uppercase; font-size: 11px; }
+        .text-right { text-align: right; }
+        .alerta { color: red; font-weight: bold; }
+        
+        .footer { text-align: center; margin-top: 40px; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="cabecalho">
+        <h1>Fábrica Tchau Brigadu</h1>
+        <p>Relatório Geral de Posição de Estoque e Custos</p>
+        <p><strong>Emitido em:</strong> {% now "d/m/Y H:i" %}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Produto / Item</th>
+                <th>Categoria</th>
+                <th class="text-right">Custo Un. (R$)</th>
+                <th class="text-right">Qtd. Estoque</th>
+                <th class="text-right">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produto in produtos %}
+            <tr>
+                <td><strong>{{ produto.nome }}</strong></td>
+                <td>{{ produto.categoria }}</td>
+                <td class="text-right">{{ produto.custo_real|floatformat:2 }}</td>
+                
+                <td class="text-right">
+                    {{ produto.estoque_set.first.quantidade|default:"0" }} un.
+                </td>
+                
+                <td class="text-right">
+                    {% with qtd=produto.estoque_set.first.quantidade|default:0 %}
+                        {% if qtd <= produto.estoque_minimo %}
+                            <span class="alerta">BAIXO (Mín: {{ produto.estoque_minimo }})</span>
+                        {% else %}
+                            <span>OK</span>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Documento gerado automaticamente pelo sistema ERP - Tchau Brigadu. Confidencial.
+    </div>
+
+</body>
+</html>

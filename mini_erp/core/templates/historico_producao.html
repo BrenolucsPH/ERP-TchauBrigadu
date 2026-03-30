@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <h3 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i> Histórico de Produção</h3>
+    <a href="{% url 'novo_apontamento' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-hammer"></i> Novo Apontamento
+    </a>
+</div>
+
+<!-- Barra de Filtros -->
+<div class="card border-secondary bg-dark shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="GET" class="row align-items-end g-3">
+            <div class="col-md-3">
+                <label class="form-label text-muted small mb-1"><i class="bi bi-calendar3"></i> Data Início</label>
+                <!-- Mantém o valor que o usuário digitou na tela -->
+                <input type="date" name="data_inicio" class="form-control form-control-sm bg-dark text-light border-secondary" value="{{ data_inicio|default_if_none:'' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small mb-1"><i class="bi bi-calendar3-fill"></i> Data Fim</label>
+                <input type="date" name="data_fim" class="form-control form-control-sm bg-dark text-light border-secondary" value="{{ data_fim|default_if_none:'' }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-info btn-sm me-2"><i class="bi bi-search"></i> Filtrar</button>
+                <a href="{% url 'historico_producao' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> Limpar</a>
+            </div>
+            <div class="col-md-5"> <!-- Aumentei de col-md-4 para col-md-5 para caber os 3 botões -->
+                <button type="submit" class="btn btn-outline-info btn-sm me-1"><i class="bi bi-search"></i> Filtrar</button>
+                <a href="{% url 'historico_producao' %}" class="btn btn-outline-secondary btn-sm me-2"><i class="bi bi-x-circle"></i> Limpar</a>
+                
+                <!-- NOVO BOTÃO DE EXPORTAR -->
+                <button type="submit" formaction="{% url 'exportar_excel' %}" class="btn btn-success btn-sm">
+                    <i class="bi bi-file-earmark-excel"></i> Baixar Excel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabela de Resultados -->
+<div class="card border-secondary bg-dark shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="text-muted table-dark">
+                    <tr>
+                        <th class="ps-4">Data e Hora</th>
+                        <th>Produto Fabricado</th>
+                        <th>Qtd. Produzida</th>
+                        <th>Operador</th>
+                        <th>Observação</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in apontamentos %}
+                    <tr>
+                        <td class="ps-4 text-light">{{ item.data_registro|date:"d/m/Y H:i" }}</td>
+                        <td class="fw-bold">{{ item.produto.nome }}</td>
+                        <td class="text-success fw-bold"><i class="bi bi-plus-lg small"></i> {{ item.quantidade }} un.</td>
+                        <td class="text-muted"><i class="bi bi-person-circle me-1"></i>{{ item.usuario.username|default:"Sistema" }}</td>
+                        <td class="text-muted small">{{ item.observacao|default:"-" }}</td>
+                        <td class="text-end pe-4">
+                            {% if user.is_superuser %}
+                            <form action="{% url 'excluir_apontamento' item.id %}" method="POST" class="d-inline" onsubmit="return confirm('ATENÇÃO: Isso vai remover o produto final do estoque e devolver as matérias-primas. Tem certeza que deseja desfazer?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Desfazer Apontamento">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Desfazer
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted small" title="Apenas administradores podem desfazer"><i class="bi bi-lock"></i></span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhum apontamento de produção neste período.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
