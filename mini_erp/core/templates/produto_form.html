@@ -33,13 +33,16 @@
         <!-- O Django sabe se está editando ou criando pelo "object" -->
         {% if object %}Editar Item{% else %}Cadastrar Novo Item{% endif %}
     </h3>
-    <a href="{% url 'painel' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Voltar ao Painel</a>
+    <button type="button" onclick="history.back()" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Voltar
+            </button>
 </div>
 
 <div class="card border-secondary bg-dark shadow-sm form-dark" style="max-width: 600px; margin: 0 auto;">
     <div class="card-body p-4 p-md-5">
         <form method="POST">
             {% csrf_token %}
+            <input type="hidden" name="origem" value="{{ request.GET.origem }}">
             
             {{ form.as_p }}
             

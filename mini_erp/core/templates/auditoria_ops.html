@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="text-light fw-bold mb-0"><i class="bi bi-shield-check text-info me-2"></i>Auditoria de Planejamento</h3>
+            <p class="text-muted small">Rastreabilidade completa de ações nas Ordens de Produção</p>
+        </div>
+        <a href="{% url 'gestao_ops' %}" class="btn btn-outline-secondary fw-bold">
+            <i class="bi bi-arrow-left"></i> Voltar para OPs
+        </a>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm">
+        <div class="card-body p-4">
+            <div class="timeline">
+                {% for log in logs %}
+                <div class="timeline-item d-flex mb-4">
+                    <div class="timeline-icon-col d-flex flex-column align-items-center me-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 40px; height: 40px; 
+                            {% if log.acao == 'Criada' %}background-color: #ffc107; color: #000;
+                            {% elif log.acao == 'Editada' %}background-color: #0dcaf0; color: #000;
+                            {% elif log.acao == 'Iniciada' %}background-color: #0d6efd; color: #fff;
+                            {% elif log.acao == 'Concluída' %}background-color: #198754; color: #fff;
+                            {% elif log.acao == 'Cancelada' %}background-color: #dc3545; color: #fff;
+                            {% else %}background-color: #6c757d; color: #fff;{% endif %}">
+                            
+                            {% if log.acao == 'Criada' %}<i class="bi bi-plus-lg"></i>
+                            {% elif log.acao == 'Editada' %}<i class="bi bi-pencil-fill"></i>
+                            {% elif log.acao == 'Iniciada' %}<i class="bi bi-play-fill fs-5"></i>
+                            {% elif log.acao == 'Concluída' %}<i class="bi bi-check-lg fs-5"></i>
+                            {% elif log.acao == 'Cancelada' %}<i class="bi bi-x-lg"></i>
+                            {% else %}<i class="bi bi-info-lg"></i>{% endif %}
+                        </div>
+                        {% if not forloop.last %}
+                        <div class="flex-grow-1 mt-2" style="width: 2px; background-color: #333; min-height: 30px;"></div>
+                        {% endif %}
+                    </div>
+
+                    <div class="timeline-content bg-black border border-secondary rounded p-3 flex-grow-1">
+                        <div class="d-flex justify-content-between mb-1">
+                            <h6 class="text-light fw-bold mb-0">OP #{{ log.op.id }} - {{ log.acao }}</h6>
+                            <small class="text-muted">{{ log.data_registro|date:"d/m/Y às H:i" }}</small>
+                        </div>
+                        <div class="text-info small fw-bold mb-2">
+                            <i class="bi bi-person-circle"></i> Por: {{ log.usuario.first_name|default:log.usuario.username|default:"Sistema" }}
+                        </div>
+                        <p class="text-muted small mb-0">{{ log.detalhes }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-shield-slash fs-1"></i>
+                    <p class="mt-2">Nenhum registro de auditoria disponível.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

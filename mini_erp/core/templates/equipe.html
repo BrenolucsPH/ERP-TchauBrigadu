@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="text-light fw-bold mb-0"><i class="bi bi-person-badge-fill text-light me-2"></i>Gestão de Equipe</h3>
+            <p class="text-muted small">Controle de acessos e permissões do sistema</p>
+        </div>
+        <button class="btn btn-light fw-bold text-dark shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoUsuario">
+            <i class="bi bi-person-plus-fill"></i> Novo Funcionário
+        </button>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+                <thead class="border-bottom border-secondary text-muted small uppercase">
+                    <tr>
+                        <th class="ps-4">Login de Acesso</th>
+                        <th>Nível de Permissão</th>
+                        <th>Último Acesso</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td class="ps-4 text-light fw-bold">
+                            <i class="bi bi-person-circle text-secondary me-2 fs-5"></i>
+                            {{ usuario.username }}
+                            {% if usuario.is_superuser %}
+                                <span class="badge bg-danger ms-2"><i class="bi bi-shield-lock-fill"></i> Dono</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            {% if usuario.is_superuser %}
+                                <span class="badge bg-danger shadow-sm"><i class="bi bi-key-fill me-1"></i> Administrador Supremo</span>
+                            {% elif usuario.perfil.tipo == 'Gerente' %}
+                                <span class="badge bg-danger shadow-sm"><i class="bi bi-star-fill me-1"></i> Gerente</span>
+                            {% elif usuario.perfil.tipo == 'Financeiro' %}
+                                <span class="badge bg-success shadow-sm"><i class="bi bi-currency-dollar me-1"></i> Financeiro</span>
+                            {% elif usuario.perfil.tipo == 'Producao' %}
+                                <span class="badge bg-warning text-dark shadow-sm"><i class="bi bi-gear-fill me-1"></i> Produção</span>
+                            {% elif usuario.perfil.tipo == 'Logistica' %}
+                                <span class="badge bg-primary shadow-sm"><i class="bi bi-truck me-1"></i> Logística</span>
+                            {% elif usuario.perfil.tipo == 'Qualidade' %}
+                                <span class="badge text-white shadow-sm" style="background-color: #6f42c1;"><i class="bi bi-check-circle-fill me-1"></i> Qualidade</span>
+                            {% elif usuario.perfil.tipo == 'Socios' %}
+                                <span class="badge bg-info text-dark shadow-sm"><i class="bi bi-graph-up-arrow me-1"></i> Sócios (BI)</span>
+                            {% else %}
+                                <span class="badge bg-secondary shadow-sm">Sem Crachá</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-muted small">
+                            {% if usuario.last_login %}
+                                {{ usuario.last_login|date:"d/m/Y às H:i" }}
+                            {% else %}
+                                Nunca acessou
+                            {% endif %}
+                        </td>
+                        
+                        <td class="text-end pe-4">
+                            {% if not usuario.is_superuser or usuario == request.user %}
+                                <button class="btn btn-outline-info btn-sm p-1 py-0 me-1" title="Redefinir Senha" data-bs-toggle="modal" data-bs-target="#modalSenha{{ usuario.id }}">
+                                    <i class="bi bi-key-fill"></i>
+                                </button>
+                            {% endif %}
+
+                            {% if not usuario.is_superuser and usuario != request.user %}
+                                <a href="{% url 'excluir_usuario' usuario.id %}" class="btn btn-outline-danger btn-sm p-1 py-0" title="Revogar Acesso" onclick="return confirm('Tem certeza que deseja excluir o acesso de {{ usuario.username }}?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Nenhum usuário encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNovoUsuario" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form method="POST"> {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-1"></i> Criar Novo Acesso</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Login (Nome de Usuário)</label>
+                        <input type="text" name="username" class="form-control bg-black text-light border-secondary" required placeholder="Ex: joao.vendedor">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Senha Inicial</label>
+                        <input type="password" name="senha" class="form-control bg-black text-light border-secondary" required placeholder="Digite uma senha forte">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Crachá (Nível de Acesso)</label>
+                        <select name="tipo_acesso" class="form-select bg-black text-light border-secondary" required>
+                            <option value="" disabled selected>Escolha o setor do funcionário...</option>
+                            <option value="Logistica">Logística (Estoque e Compras)</option>
+                            <option value="Qualidade">Qualidade (Fichas Técnicas e Perdas)</option>
+                            <option value="Producao">Produção (Chão de Fábrica)</option>
+                            <option value="Financeiro">Financeiro (Caixa, Vendas e CRM)</option>
+                            <option value="Socios">Sócios (Apenas Relatórios e BI)</option>
+                            <option value="Gerente">Gerente (Acesso Total)</option>
+                        </select>
+                        <div class="form-text text-muted mt-2" style="font-size: 0.75rem;">
+                            <i class="bi bi-info-circle"></i> O sistema esconderá os botões que o funcionário não tem permissão para ver.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn btn-light fw-bold text-dark w-100">Criar Acesso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% for usuario in usuarios %}
+<div class="modal fade" id="modalSenha{{ usuario.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form method="POST" action="{% url 'resetar_senha' usuario.id %}"> 
+                {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fw-bold text-info"><i class="bi bi-key-fill me-1"></i> Redefinir Senha</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    <p class="text-muted small mb-3">
+                        Você está alterando a senha de acesso do usuário <strong class="text-light">{{ usuario.username }}</strong>.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Nova Senha</label>
+                        <input type="text" name="nova_senha" class="form-control bg-black text-light border-secondary" required placeholder="Digite a nova senha temporária">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn btn-info fw-bold text-dark w-100">Confirmar Nova Senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

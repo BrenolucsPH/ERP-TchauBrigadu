@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-bank text-primary me-2"></i>Gestão Financeira e Fluxo de Caixa</h3>
+        <div>
+            <button class="btn btn-danger btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalPagar">
+                <i class="bi bi-dash-circle"></i> Nova Despesa
+            </button>
+            <button class="btn btn-success btn-sm fw-bold shadow-sm ms-2" data-bs-toggle="modal" data-bs-target="#modalReceber">
+                <i class="bi bi-plus-circle"></i> Nova Receita
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-info shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-info small fw-bold text-uppercase"><i class="bi bi-wallet2 me-1"></i> Saldo Projetado</h6>
+                    <h2 class="text-light mb-0">R$ {{ saldo_projetado|floatformat:2 }}</h2>
+                    <small class="text-muted" style="font-size: 0.7rem;">Se tudo for pago e recebido hoje</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-warning shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-warning small fw-bold text-uppercase"><i class="bi bi-exclamation-triangle me-1"></i> Inadimplência (Rua)</h6>
+                    <h2 class="text-light mb-0">R$ {{ inadimplencia|floatformat:2 }}</h2>
+                    <small class="text-muted" style="font-size: 0.7rem;">Dinheiro seu que clientes atrasaram</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-danger shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-danger small fw-bold text-uppercase"><i class="bi bi-alarm me-1"></i> Atrasos da Empresa</h6>
+                    <h2 class="text-light mb-0">R$ {{ fornecedores_atrasados|floatformat:2 }}</h2>
+                    <small class="text-muted" style="font-size: 0.7rem;">Contas vencidas e não pagas por nós</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-black border-secondary shadow-sm" style="border-left: 4px solid #dc3545 !important;">
+                <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="text-muted small fw-bold text-uppercase mb-0">Total a Pagar (Geral)</h6>
+                    <h4 class="text-danger mb-0 fw-bold">R$ {{ total_pagar|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-black border-secondary shadow-sm" style="border-left: 4px solid #198754 !important;">
+                <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="text-muted small fw-bold text-uppercase mb-0">Total a Receber (Geral)</h6>
+                    <h4 class="text-success mb-0 fw-bold">R$ {{ total_receber|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-header border-secondary text-danger fw-bold bg-gradient">
+                    <i class="bi bi-arrow-down-circle me-1"></i> Contas a Pagar
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0 small align-middle">
+                        <thead>
+                            <tr class="text-muted">
+                                <th>Vencimento</th>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th class="text-end">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conta in pagar_pendentes %}
+                            <tr class="{% if conta.is_atrasada %}bg-danger bg-opacity-10{% endif %}">
+                                <td>
+                                    {{ conta.data_vencimento|date:"d/m/Y" }}<br>
+                                    {% if conta.is_atrasada %}
+                                        <span class="badge bg-danger" style="font-size: 0.6rem;">ATRASADO</span>
+                                    {% elif conta.is_vence_hoje %}
+                                        <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">VENCE HOJE</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{% if conta.is_atrasada %}text-danger fw-bold{% endif %}">{{ conta.descricao }}</td>
+                                <td class="text-danger fw-bold">R$ {{ conta.valor }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'baixar_conta' 'pagar' conta.id %}" class="btn btn-outline-danger btn-sm py-0" title="Dar Baixa"><i class="bi bi-check2-square"></i> Pagar</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-shield-check fs-3 d-block mb-1"></i> Nenhuma dívida pendente!</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-header border-secondary text-success fw-bold bg-gradient">
+                    <i class="bi bi-arrow-up-circle me-1"></i> Contas a Receber
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0 small align-middle">
+                        <thead>
+                            <tr class="text-muted">
+                                <th>Vencimento</th>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th class="text-end">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conta in receber_pendentes %}
+                            <tr class="{% if conta.is_atrasada %}bg-warning bg-opacity-10{% endif %}">
+                                <td>
+                                    {{ conta.data_vencimento|date:"d/m/Y" }}<br>
+                                    {% if conta.is_atrasada %}
+                                        <span class="badge bg-danger" style="font-size: 0.6rem;">INADIMPLENTE</span>
+                                    {% elif conta.is_vence_hoje %}
+                                        <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">RECEBE HOJE</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{% if conta.is_atrasada %}text-warning fw-bold{% endif %}">{{ conta.descricao }}</td>
+                                <td class="text-success fw-bold">R$ {{ conta.valor }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'baixar_conta' 'receber' conta.id %}" class="btn btn-outline-success btn-sm py-0" title="Confirmar Recebimento"><i class="bi bi-check2-square"></i> Receber</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-1"></i> Nenhum recebimento agendado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPagar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-danger">
+            <form method="POST"> {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-danger fw-bold"><i class="bi bi-dash-circle me-2"></i>Registrar Despesa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    {{ form_pagar.as_p }}
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" name="btn_pagar" class="btn btn-danger fw-bold">Salvar Conta a Pagar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReceber" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-success">
+            <form method="POST"> {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-success fw-bold"><i class="bi bi-plus-circle me-2"></i>Registrar Receita</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    {{ form_receber.as_p }}
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" name="btn_receber" class="btn btn-success fw-bold">Salvar Conta a Receber</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-dark input, .form-dark select, .form-dark textarea { background-color: #1a1a1a !important; color: white !important; border: 1px solid #333 !important; }
+    .form-dark label { font-size: 0.8rem; color: #888; margin-top: 10px; font-weight: bold; }
+</style>
+{% endblock %}

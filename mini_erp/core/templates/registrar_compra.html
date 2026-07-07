@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<style>
+    .form-dark select, .form-dark input, .form-dark textarea {
+        background-color: #1e1f20 !important;
+        color: #e3e3e3 !important;
+        border: 1px solid #44474a !important;
+    }
+    .form-dark select:focus, .form-dark input:focus, .form-dark textarea:focus {
+        border-color: #198754 !important;
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-cart-plus text-success me-2"></i>Entrada de Materiais</h3>
+        <a href="{% url 'cadastrar_fornecedor' %}" class="btn btn-outline-success btn-sm"><i class="bi bi-truck"></i> + Novo Fornecedor</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card border-secondary bg-dark shadow-sm h-100">
+                <div class="card-header border-secondary text-success fw-bold">
+                    <i class="bi bi-box-arrow-in-down me-1"></i> Registrar Nova Compra
+                </div>
+                <div class="card-body form-dark">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold small">Fornecedor</label>
+                            {{ form.fornecedor }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold small">Matéria-Prima Comprada *</label>
+                            {{ form.produto }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted fw-bold small">Quantidade *</label>
+                                {{ form.quantidade }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted fw-bold small">Preço Unitário (R$) *</label>
+                                {{ form.preco_unitario }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small">Observações / NFe</label>
+                            {{ form.observacao }}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success fw-bold">
+                                <i class="bi bi-check2-circle me-1"></i> Salvar e Alimentar Estoque
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 mb-4">
+            <div class="card border-secondary bg-dark shadow-sm h-100">
+                <div class="card-header border-secondary text-muted fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-1"></i> Últimas Entradas</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle mb-0">
+                            <thead class="border-bottom border-secondary text-muted small uppercase">
+                                <tr>
+                                    <th class="ps-4">Data</th>
+                                    <th>Fornecedor</th>
+                                    <th>Item</th>
+                                    <th>Qtd.</th>
+                                    <th>Preço Un.</th>
+                                    <th>Total Pago</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for compra in historico_compras %}
+                                <tr>
+                                    <td class="ps-4 text-muted small">{{ compra.data_compra|date:"d/m/Y H:i" }}</td>
+                                    <td class="text-light">{{ compra.fornecedor.nome|default:"-" }}</td>
+                                    <td class="fw-bold">{{ compra.produto.nome }}</td>
+                                    <td class="text-success fw-bold">+ {{ compra.quantidade|floatformat:2 }}</td>
+                                    <td class="text-muted">R$ {{ compra.preco_unitario|floatformat:2 }}</td>
+                                    <td class="fw-bold text-success">R$ {{ compra.total_compra|floatformat:2 }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="bi bi-cart-x fs-1 text-secondary d-block mb-3"></i>
+                                        Nenhuma compra registrada ainda!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-person-lines-fill text-info me-2"></i>Minha Conta</h3>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm text-center pt-4 pb-3 h-100">
+                <div class="card-body">
+                    {% if request.user.perfil.foto %}
+                        <img src="{{ request.user.perfil.foto.url }}" class="rounded-circle mb-3 shadow" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #192027;">
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=0D8ABC&color=fff&size=150" class="rounded-circle mb-3 shadow border border-secondary">
+                    {% endif %}
+                    
+                    <h4 class="text-light fw-bold mb-0">
+                        {% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}{{ request.user.username }}{% endif %}
+                    </h4>
+                    <p class="text-info fw-bold mb-3"><i class="bi bi-tag-fill me-1"></i>{{ request.user.perfil.tipo }}</p>
+                    
+                    <ul class="list-group list-group-flush text-start mt-4 bg-transparent">
+                        <li class="list-group-item bg-transparent text-muted border-secondary px-0">
+                            <i class="bi bi-envelope-fill text-light me-2"></i> {{ request.user.email|default:"E-mail não cadastrado" }}
+                        </li>
+                        <li class="list-group-item bg-transparent text-muted border-secondary px-0">
+                            <i class="bi bi-telephone-fill text-light me-2"></i> {{ request.user.perfil.telefone|default:"Telefone não cadastrado" }}
+                        </li>
+                        <li class="list-group-item bg-transparent text-muted border-secondary px-0">
+                            <i class="bi bi-calendar-check text-light me-2"></i> Membro desde: {{ request.user.date_joined|date:"M de Y" }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 mb-4">
+            
+            <div class="card bg-dark border-secondary shadow-sm mb-4">
+                <div class="card-header border-secondary text-light fw-bold">
+                    <i class="bi bi-pencil-square text-info me-1"></i> Editar Dados Pessoais
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data"> {% csrf_token %}
+                        <input type="hidden" name="atualizar_dados" value="1">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Nome</label>
+                                <input type="text" name="first_name" value="{{ request.user.first_name }}" class="form-control bg-black text-light border-secondary">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Sobrenome</label>
+                                <input type="text" name="last_name" value="{{ request.user.last_name }}" class="form-control bg-black text-light border-secondary">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">E-mail (Recuperação e Contato)</label>
+                                <input type="email" name="email" value="{{ request.user.email }}" class="form-control bg-black text-light border-secondary">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted small fw-bold">Telefone / WhatsApp</label>
+                                <input type="text" name="telefone" value="{{ request.user.perfil.telefone|default:'' }}" class="form-control bg-black text-light border-secondary" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label text-muted small fw-bold">Alterar Foto de Perfil</label>
+                                <input type="file" name="foto" accept="image/*" class="form-control bg-black text-light border-secondary">
+                            </div>
+                            <div class="col-12 mt-4 text-end">
+                                <button type="submit" class="btn btn-info fw-bold text-dark px-4">Salvar Alterações</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-header border-secondary text-danger fw-bold">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Segurança da Conta
+                </div>
+                <div class="card-body">
+                    <form method="POST"> {% csrf_token %}
+                        <input type="hidden" name="alterar_senha" value="1">
+                        
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-bold">Senha Atual</label>
+                                <input type="password" name="senha_atual" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-bold">Nova Senha</label>
+                                <input type="password" name="nova_senha" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small fw-bold">Confirmar Nova Senha</label>
+                                <input type="password" name="confirmar_senha" class="form-control bg-black text-light border-secondary" required>
+                            </div>
+                            <div class="col-12 mt-4 text-end">
+                                <button type="submit" class="btn btn-outline-danger fw-bold px-4">Alterar Senha</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

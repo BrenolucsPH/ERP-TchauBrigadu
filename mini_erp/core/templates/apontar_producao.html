@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="text-center mb-5">
+        <h2 class="text-light fw-bold display-6"><i class="bi bi-upc-scan text-primary me-2"></i>Terminal de Apontamento</h2>
+        <p class="text-muted">Selecione a Ordem de Produção e informe a quantidade fabricada.</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card bg-dark border-secondary shadow-lg">
+                <div class="card-body p-4 form-dark">
+                    
+                    <form method="POST" action="{% url 'novo_apontamento' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label text-info fw-bold fs-5 mb-3">1. Qual OP você está produzindo?</label>
+                            <select name="op_id" class="form-select form-select-lg bg-black text-light border-secondary shadow-none" required style="height: 60px; font-size: 1.1rem;">
+                                <option value="" disabled selected>-- Toque para selecionar a OP --</option>
+                                {% for op in ops %}
+                                    <option value="{{ op.id }}">
+                                        OP #{{ op.id }} - {{ op.produto.nome }} (Faltam produzir: {{ op.quantidade_restante }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if not ops %}
+                                <div class="alert alert-warning mt-2 small p-2"><i class="bi bi-exclamation-triangle"></i> Nenhuma Ordem de Produção em andamento na fábrica no momento.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-5">
+                            <label class="form-label text-success fw-bold fs-5 mb-3">2. Quantas unidades foram feitas agora?</label>
+                            <input type="number" name="quantidade" class="form-control form-control-lg bg-black text-light border-secondary text-center shadow-none" required min="1" placeholder="Ex: 50" style="height: 80px; font-size: 2.5rem; font-weight: bold;">
+                            <div class="form-text text-muted mt-2 text-center">O sistema dará baixa automática no estoque de palha e fumo.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold py-3" style="font-size: 1.3rem;" {% if not ops %}disabled{% endif %}>
+                            <i class="bi bi-check-circle-fill me-2"></i> REGISTRAR PRODUÇÃO
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="{% url 'gestao_ops' %}" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="bi bi-arrow-left"></i> Voltar para o Painel de OPs
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ajustes específicos para a tela de fábrica (Tamanho maior para Touch) */
+    .form-dark select:focus, .form-dark input:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    }
+    /* Esconde as setinhas feias do input type="number" */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
+</style>
+{% endblock %}

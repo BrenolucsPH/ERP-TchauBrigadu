@@ -1,12 +1,14 @@
-# Ambientes Virtuais
-erp_env/
-env/
+# Banco de Dados
+db.sqlite3
+
+# Pastas virtuais do Python e Cache
 venv/
-
-# Arquivos de Cache do Python
+env/
 __pycache__/
-*.py[cod]
-*$py.class
+*.pyc
 
-# Opcional: Se não quiser subir o banco de dados com seus dados reais, descomente a linha abaixo
-# db.sqlite3
+# Arquivos de mídia (Fotos de perfil que os usuários sobem)
+media/
+
+# Variáveis de ambiente (Senhas e Chaves Secretas)
+.env
