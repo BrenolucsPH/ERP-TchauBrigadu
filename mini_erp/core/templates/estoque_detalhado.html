@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-boxes text-info me-2"></i>Visão Detalhada de Estoque</h3>
+        <div>
+            <a href="{% url 'exportar_estoque_csv' %}" class="btn btn-success btn-sm me-2 shadow-sm">
+                <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+            </a>
+            <a href="{% url 'registrar_compra' %}" class="btn btn-outline-info btn-sm shadow-sm">
+                <i class="bi bi-cart-plus"></i> Dar Entrada em Material
+            </a>
+            <a href="{% url 'relatorio_pdf' %}" class="btn btn-outline-danger fw-bold" target="_blank">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Gerar PDF
+            </a>
+            <a href="{% url 'cadastrar_produto' %}?origem=estoque" class="btn btn-success fw-bold text-dark">
+                <i class="bi bi-plus-circle-fill me-1"></i> Novo Produto / Insumo
+            </a>
+        </div>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" action="{% url 'estoque_detalhado' %}" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="text-muted small fw-bold mb-1"><i class="bi bi-search me-1"></i> Buscar Produto</label>
+                    <input type="text" name="busca" class="form-control bg-black text-light border-secondary" placeholder="Ex: Fumo, Uva, Embalagem..." value="{{ request.GET.busca }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold mb-1">Categoria</label>
+                    <select name="categoria" class="form-select bg-black text-light border-secondary">
+                        <option value="">Todas as Categorias</option>
+                        {% for cat in categorias_existentes %}
+                            {% if cat %}
+                                <option value="{{ cat }}" {% if request.GET.categoria == cat %}selected{% endif %}>{{ cat }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold mb-1">Status</label>
+                    <select name="status" class="form-select bg-black text-light border-secondary">
+                        <option value="">Todo o Estoque</option>
+                        <option value="baixo" {% if request.GET.status == 'baixo' %}selected{% endif %}>🚨 Estoque Crítico / Baixo</option>
+                        <option value="zerado" {% if request.GET.status == 'zerado' %}selected{% endif %}>⚠️ Totalmente Zerado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-info w-100 fw-bold"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-info shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-info small fw-bold uppercase"><i class="bi bi-cash-stack me-1"></i> Capital Imobilizado</h6>
+                    <h3 class="text-light mb-0">R$ {{ total_imobilizado|floatformat:2 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="text-muted small fw-bold uppercase"><i class="bi bi-tag-fill me-1"></i> Variedade de Itens</h6>
+                    <h3 class="text-light mb-0">{{ total_itens_diferentes }} Itens</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark {% if alertas_count > 0 %}border-danger{% else %}border-success{% endif %} shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="{% if alertas_count > 0 %}text-danger{% else %}text-success{% endif %} small fw-bold uppercase">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Alertas de Reposição
+                    </h6>
+                    <h3 class="{% if alertas_count > 0 %}text-danger{% else %}text-success{% endif %} mb-0">
+                        {{ alertas_count }} Itens Críticos
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+                <thead class="border-bottom border-secondary text-muted small uppercase">
+                    <tr>
+                        <th class="ps-4">Produto / Matéria-Prima</th>
+                        <th>Categoria</th>
+                        <th class="text-center">Min.</th>
+                        <th class="text-center">Em Estoque</th>
+                        <th>Custo Un.</th>
+                        <th>Valor Total</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in lista_estoque %}
+                    <tr class="{% if item.is_baixo %}border-start border-danger border-4{% endif %}">
+                        <td class="ps-4 fw-bold text-light">
+                            {{ item.produto.nome }}
+                            {% if item.is_baixo %}
+                                <span class="badge bg-danger ms-2" title="Abaixo do limite!"><i class="bi bi-exclamation-triangle"></i></span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ item.produto.categoria }}</span></td>
+                        <td class="text-center text-muted">{{ item.estoque_minimo|floatformat:0 }}</td>
+                        <td class="text-center fw-bold {% if item.quantidade <= 0 %}text-danger{% elif item.is_baixo %}text-warning{% else %}text-success{% endif %}">
+                            {{ item.quantidade|floatformat:2 }}
+                        </td>
+                        <td class="text-muted">R$ {{ item.custo_unitario|floatformat:2 }}</td>
+                        <td class="text-info fw-bold">R$ {{ item.valor_total|floatformat:2 }}</td>
+                        <td class="text-end">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'gerenciar_estoque' item.produto.id %}?origem=estoque" class="btn btn-outline-info btn-sm" title="Ajustar Estoque">
+                                <i class="bi bi-box-seam"></i>
+                            </a>
+                            
+                            {% if user.is_superuser %}
+                            <a href="{% url 'editar_produto' item.produto.id %}?origem=estoque" class="btn btn-outline-warning btn-sm" title="Editar Cadastro">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            
+                            {% if 'final' in item.produto.categoria|lower %}
+                            <a href="{% url 'ficha_tecnica' item.produto.id %}?origem=estoque" class="btn btn-outline-primary btn-sm" title="Ficha Técnica">
+                                <i class="bi bi-card-list"></i>
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'excluir_produto' item.produto.id %}?origem=estoque" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-search fs-1 text-secondary d-block mb-3"></i>
+                            Nenhum item encontrado com esses filtros.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

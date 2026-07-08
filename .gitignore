@@ -1,0 +1,14 @@
+# Banco de Dados
+db.sqlite3
+
+# Pastas virtuais do Python e Cache
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Arquivos de mídia (Fotos de perfil que os usuários sobem)
+media/
+
+# Variáveis de ambiente (Senhas e Chaves Secretas)
+.env

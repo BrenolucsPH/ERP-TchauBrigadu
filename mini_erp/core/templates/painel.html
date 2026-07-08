@@ -1,0 +1,551 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+        <h3 class="fw-bold mb-0">Controle de Produção</h3>
+        
+        <div class="d-flex align-items-center gap-3">
+            <!-- NOVO FILTRO DE ORDENAÇÃO INTELIGENTE -->
+            <form method="GET" class="d-flex align-items-center m-0 p-0">
+                <i class="bi bi-filter text-muted me-2 fs-5"></i>
+                <!-- Segura o mês e ano do Dashboard -->
+                <input type="hidden" name="mes" value="{{ mes_filtro }}">
+                <input type="hidden" name="ano" value="{{ ano_filtro }}">
+                
+                <select name="ordenar" class="form-select form-select-sm bg-dark text-light border-secondary" onchange="this.form.submit()">
+                    <option value="nome" {% if ordenar == 'nome' %}selected{% endif %}>Ordem Alfabética (A-Z)</option>
+                    <option value="-nome" {% if ordenar == '-nome' %}selected{% endif %}>Ordem Alfabética (Z-A)</option>
+                    <option value="-id" {% if ordenar == '-id' %}selected{% endif %}>Mais Recentes</option>
+                    <option value="id" {% if ordenar == 'id' %}selected{% endif %}>Mais Antigos</option>
+                </select>
+            </form>
+
+            {% if user.is_superuser %}
+            <a href="{% url 'relatorio_pdf' %}" class="btn btn-outline-danger btn-sm" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i> PDF
+            </a>
+            <a href="{% url 'cadastrar_produto' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg"></i> Novo Item
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-transparent border-bottom border-secondary pt-3 pb-0">
+        <ul class="nav nav-tabs border-0" id="erpTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active text-light border-0" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab"><i class="bi bi-bar-chart-line"></i> Dashboard</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-muted border-0" id="finais-tab" data-bs-toggle="tab" data-bs-target="#finais" type="button" role="tab"><i class="bi bi-box-seam"></i> Produtos Finais</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link text-muted border-0" id="insumos-tab" data-bs-toggle="tab" data-bs-target="#insumos" type="button" role="tab"><i class="bi bi-layers"></i> Matérias-Primas</button>
+            </li>
+        </ul>
+    </div>
+
+    <div class="card-body">
+        <div class="tab-content" id="erpTabsContent">
+            
+            <!-- ABA 1: DASHBOARD -->
+        <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard</h3>
+        
+        <a href="{% url 'relatorio_fechamento' %}?mes={{ mes_filtro }}&ano={{ ano_filtro }}" target="_blank" class="btn btn-primary fw-bold shadow">
+            <i class="bi bi-printer me-2"></i>Gerar Relatório em PDF
+        </a>
+    </div>
+            
+            <!-- 1. Filtro de Datas -->
+            <div class="card bg-dark border-secondary mb-4 shadow-sm">
+                <div class="card-body py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="text-light mb-0"><i class="bi bi-calendar3 text-info me-2"></i>Desempenho do Período</h6>
+                    <form method="GET" class="d-flex align-items-center gap-2">
+                        <select name="mes" class="form-select form-select-sm bg-dark text-light border-secondary">
+                            <option value="1" {% if mes_filtro == '1' %}selected{% endif %}>Janeiro</option>
+                            <option value="2" {% if mes_filtro == '2' %}selected{% endif %}>Fevereiro</option>
+                            <option value="3" {% if mes_filtro == '3' %}selected{% endif %}>Março</option>
+                            <option value="4" {% if mes_filtro == '4' %}selected{% endif %}>Abril</option>
+                            <option value="5" {% if mes_filtro == '5' %}selected{% endif %}>Maio</option>
+                            <option value="6" {% if mes_filtro == '6' %}selected{% endif %}>Junho</option>
+                            <option value="7" {% if mes_filtro == '7' %}selected{% endif %}>Julho</option>
+                            <option value="8" {% if mes_filtro == '8' %}selected{% endif %}>Agosto</option>
+                            <option value="9" {% if mes_filtro == '9' %}selected{% endif %}>Setembro</option>
+                            <option value="10" {% if mes_filtro == '10' %}selected{% endif %}>Outubro</option>
+                            <option value="11" {% if mes_filtro == '11' %}selected{% endif %}>Novembro</option>
+                            <option value="12" {% if mes_filtro == '12' %}selected{% endif %}>Dezembro</option>
+                        </select>
+                        <select name="ano" class="form-select form-select-sm bg-dark text-light border-secondary">
+                            <option value="2024" {% if ano_filtro == '2024' %}selected{% endif %}>2024</option>
+                            <option value="2025" {% if ano_filtro == '2025' %}selected{% endif %}>2025</option>
+                            <option value="2026" {% if ano_filtro == '2026' %}selected{% endif %}>2026</option>
+                        </select>
+                        <button type="submit" class="btn btn-info btn-sm text-dark fw-bold"><i class="bi bi-funnel"></i> Aplicar</button>
+                    </form>
+                </div>
+            </div>
+
+            
+            <!-- 2. Cards Superiores (Produção e Estoque) -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-info bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-info mb-1"><i class="bi bi-hammer me-1"></i> Produzido no Mês</h6>
+                            <h3 class="mb-0 fw-bold text-info">{{ total_produzido_mes }} <span class="fs-6 fw-normal">un.</span></h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-secondary bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-secondary mb-1"><i class="bi bi-layers me-1"></i> Tipos de Insumos</h6>
+                            <h3 class="mb-0 fw-bold text-light">{{ total_tipos_insumos }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-success mb-1"><i class="bi bi-currency-dollar me-1"></i> Capital Estoque</h6>
+                            <h3 class="mb-0 fw-bold text-success">R$ {{ capital_imobilizado|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-danger bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-danger mb-1"><i class="bi bi-exclamation-triangle me-1"></i> Alertas (Baixo)</h6>
+                            <h3 class="mb-0 fw-bold text-danger">{{ alertas_estoque }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Cards Financeiros (Lucro, Perdas e Faturamento) -->
+            {% if user.is_superuser %}
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-success bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-success mb-1"><i class="bi bi-cash-coin me-1"></i> Faturamento (Mês {{ mes_filtro }})</h6>
+                            <h3 class="mb-0 fw-bold text-success">R$ {{ faturamento_mes_atual|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-danger bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-danger mb-1"><i class="bi bi-trash3 me-1"></i> Prejuízo c/ Perdas</h6>
+                            <h3 class="mb-0 fw-bold text-danger">R$ {{ prejuizo_mes_atual|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-primary bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-primary mb-1"><i class="bi bi-piggy-bank me-1"></i> Resultado Bruto</h6>
+                            <h3 class="mb-0 fw-bold {% if lucro_bruto_mes >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                                R$ {{ lucro_bruto_mes|floatformat:2 }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-dark border-warning shadow-sm h-100 py-2">
+                        <div class="card-body">
+                            <h6 class="text-warning mb-1"><i class="bi bi-gear-wide-connected spin-icon me-1"></i> OPs na Fábrica</h6>
+                            <h3 class="mb-0 fw-bold text-light">{{ ops_ativas }} <span class="fs-6 text-muted fw-normal">lotes</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white shadow-sm h-100 py-2 border-0" style="background: linear-gradient(45deg, #0d6efd, #0dcaf0);">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-2">
+                            <h6 class="fw-bold mb-2"><i class="bi bi-cart-plus me-1"></i> Frente de Caixa</h6>
+                            <a href="{% url 'registrar_venda' %}" class="btn btn-light btn-sm text-primary fw-bold w-100 shadow-sm">Nova Venda</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card bg-dark border-secondary shadow-sm h-100">
+                        <div class="card-header border-secondary bg-black py-2">
+                            <h6 class="m-0 fw-bold text-light" style="font-size: 0.85rem;"><i class="bi bi-clock-history text-info me-2"></i>Últimas Saídas (Vendas)</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover table-borderless align-middle mb-0" style="font-size: 0.8rem;">
+                                    <tbody>
+                                        {% for venda in ultimas_vendas %}
+                                        <tr>
+                                            <td class="ps-3 text-muted" style="width: 25%;">{{ venda.data_venda|date:"d/m H:i" }}</td>
+                                            <td class="fw-bold" style="width: 50%;">{{ venda.cliente.nome|truncatechars:25 }}</td>
+                                            <td class="text-end pe-3 text-success fw-bold">R$ {{ venda.total_venda|floatformat:2 }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-3">Nenhuma venda recente.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Gráficos de Produção e Consumo -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-secondary bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-info mb-3"><i class="bi bi-graph-up me-2"></i>Volume Produzido no Mês</h6>
+                            <div style="height: 250px;">
+                                <canvas id="producaoMensalChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-secondary bg-dark h-100 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-warning mb-3"><i class="bi bi-pie-chart me-2"></i>Consumo de Insumos no Mês</h6>
+                            <div style="height: 250px;">
+                                <canvas id="insumosConsumidosChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. GRÁFICOS: Estoque e Origem das Perdas -->
+            <div class="row mb-4">
+                <div class="col-md-7">
+                    <div class="card border-secondary bg-dark shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="text-success mb-3"><i class="bi bi-box-seam me-2"></i>Estoque Atual na Prateleira (Matérias-Primas)</h6>
+                            <div style="height: 250px;">
+                                <canvas id="estoqueAtualChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="card border-danger bg-dark shadow-sm h-100">
+                        <div class="card-body">
+                            <h6 class="text-danger mb-3"><i class="bi bi-pie-chart-fill me-2"></i>Origem dos Prejuízos (R$)</h6>
+                            <div style="height: 250px;">
+                                <canvas id="motivosPerdaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Gráfico Financeiro (Diretoria) -->
+            {% if user.is_superuser %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-secondary bg-dark shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-warning mb-3"><i class="bi bi-graph-up-arrow me-2"></i>Evolução Financeira (Receita vs Custo)</h6>
+                            <div style="height: 300px;">
+                                <canvas id="evolucaoCustosChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+            <!-- ABA 2: PRODUTOS FINAIS -->
+            <div class="tab-pane fade" id="finais" role="tabpanel">
+                <table class="table table-hover align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>Produto Final</th>
+                            {% if user.is_superuser %}<th>Custo Final</th>{% endif %}
+                            <th>Estoque Atual</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produto in produtos_finais %}
+                        <tr>
+                            <td class="fw-bold">{{ produto.nome }}</td>
+                            
+                            {% if user.is_superuser %}
+                            <td class="text-info">R$ {{ produto.custo_real|floatformat:2 }}</td>
+                            {% endif %}
+                            
+                            <td>
+                                {% with qtd=produto.estoque_set.first.quantidade|default:0 %}
+                                    {% if qtd <= produto.estoque_minimo %}
+                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill px-3"><i class="bi bi-exclamation-triangle"></i> {{ qtd }} un.</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success rounded-pill px-3"><i class="bi bi-check-circle"></i> {{ qtd }} un.</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-end">
+                                {% if user.is_superuser %}
+                                <a href="{% url 'gerenciar_estoque' produto.id %}" class="btn btn-outline-info btn-sm" title="Gerir Estoque"><i class="bi bi-boxes"></i></a>
+                                <a href="{% url 'ficha_tecnica_pdf' produto.id %}" class="btn btn-outline-danger btn-sm" title="Baixar PDF da Receita" target="_blank"><i class="bi bi-file-earmark-pdf"></i></a>
+                                <a href="{% url 'ficha_tecnica' produto.id %}" class="btn btn-outline-secondary btn-sm" title="Ficha Técnica"><i class="bi bi-card-list"></i></a>
+                                <a href="{% url 'editar_produto' produto.id %}" class="btn btn-outline-warning btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'excluir_produto' produto.id %}" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhum produto cadastrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ABA 3: INSUMOS -->
+            <div class="tab-pane fade" id="insumos" role="tabpanel">
+                <table class="table table-hover align-middle">
+                    <thead class="text-muted">
+                        <tr>
+                            <th>Matéria-Prima / Insumo</th>
+                            {% if user.is_superuser %}<th>Custo Base (Un)</th>{% endif %}
+                            <th>Estoque Atual</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produto in insumos %}
+                        <tr>
+                            <td class="fw-bold">{{ produto.nome }}</td>
+                            {% if user.is_superuser %}<td class="text-muted">R$ {{ produto.preco_custo }}</td>{% endif %}
+                            <td>
+                                {% with qtd=produto.estoque_set.first.quantidade|default:0 %}
+                                    {% if qtd <= produto.estoque_minimo %}
+                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger rounded-pill px-3"><i class="bi bi-exclamation-triangle"></i> {{ qtd }} un.</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-25 text-success border border-success rounded-pill px-3"><i class="bi bi-check-circle"></i> {{ qtd }} un.</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-end">
+                                {% if user.is_superuser %}
+                                <a href="{% url 'gerenciar_estoque' produto.id %}" class="btn btn-outline-info btn-sm" title="Gerir Estoque"><i class="bi bi-boxes"></i></a>
+                                <a href="{% url 'editar_produto' produto.id %}" class="btn btn-outline-warning btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'excluir_produto' produto.id %}" class="btn btn-outline-danger btn-sm" title="Excluir"><i class="bi bi-trash"></i></a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-5"><i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhuma matéria-prima cadastrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- MODAL NOVO CLIENTE -->
+    <div class="modal fade" id="modalNovoCliente" tabindex="-1" aria-labelledby="modalNovoClienteLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary shadow-lg">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-light fw-bold" id="modalNovoClienteLabel"><i class="bi bi-person-badge me-2 text-info"></i>Cadastrar Novo Cliente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{% url 'novo_cliente_rapido' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Nome da Loja/Cliente *</label>
+                            <input type="text" name="nome" class="form-control bg-dark text-light border-secondary" required placeholder="Ex: Mercadinho Central">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Telefone</label>
+                                <input type="text" name="telefone" class="form-control bg-dark text-light border-secondary" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">E-mail</label>
+                                <input type="email" name="email" class="form-control bg-dark text-light border-secondary" placeholder="contato@loja.com">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label text-muted">Endereço (Opcional)</label>
+                            <textarea name="endereco" class="form-control bg-dark text-light border-secondary" rows="2" placeholder="Rua, Bairro, Cidade..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-info fw-bold text-dark"><i class="bi bi-check-lg"></i> Salvar Cliente</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // ==========================================
+        // 1. MEMÓRIA DE ABAS (BLINDADA)
+        // ==========================================
+        var abaSalva = localStorage.getItem('aba_tchau_brigadu');
+        
+        if (abaSalva) {
+            // Tira a cor e esconde todas as abas
+            document.querySelectorAll('#erpTabs .nav-link').forEach(b => b.classList.remove('active', 'text-light'));
+            document.querySelectorAll('.tab-content .tab-pane').forEach(p => p.classList.remove('show', 'active'));
+            
+            // Acende apenas a aba que estava gravada
+            var btn = document.getElementById(abaSalva + '-tab');
+            var painel = document.getElementById(abaSalva);
+            
+            if (btn && painel) {
+                btn.classList.add('active', 'text-light');
+                painel.classList.add('show', 'active');
+            }
+        }
+
+        // Grava na memória toda vez que você clica em uma aba
+        document.querySelectorAll('#erpTabs .nav-link').forEach(btn => {
+            btn.addEventListener('click', function() {
+                var idPainel = this.getAttribute('data-bs-target').replace('#', '');
+                localStorage.setItem('aba_tchau_brigadu', idPainel);
+            });
+        });
+
+        // ==========================================
+        // 2. GRÁFICOS (SEM ERROS NO VS CODE E À PROVA DE ASPAS)
+        // ==========================================
+        const ctxProducao = document.getElementById('producaoMensalChart');
+        if (ctxProducao) {
+            new Chart(ctxProducao, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ nomes_producao_grafico|escapejs }}'),
+                    datasets: [{
+                        label: 'Unidades Produzidas',
+                        data: JSON.parse('{{ quantidades_producao_grafico|escapejs }}'),
+                        backgroundColor: 'rgba(13, 202, 240, 0.8)',
+                        borderColor: '#0dcaf0',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        const ctxConsumo = document.getElementById('insumosConsumidosChart');
+        if (ctxConsumo) {
+            new Chart(ctxConsumo, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ nomes_insumos_grafico|escapejs }}'),
+                    datasets: [{
+                        label: 'Unidades Consumidas',
+                        data: JSON.parse('{{ quantidades_insumos_grafico|escapejs }}'),
+                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                        borderColor: '#ffc107',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        const ctxEstoque = document.getElementById('estoqueAtualChart');
+        if (ctxEstoque) {
+            new Chart(ctxEstoque, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('{{ nomes_estoque_grafico|escapejs }}'),
+                    datasets: [{
+                        label: 'Unidades em Estoque',
+                        data: JSON.parse('{{ quantidades_estoque_grafico|escapejs }}'),
+                        backgroundColor: 'rgba(25, 135, 84, 0.8)',
+                        borderColor: '#198754',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        const ctxFinanceiro = document.getElementById('evolucaoCustosChart');
+        if (ctxFinanceiro) {
+            new Chart(ctxFinanceiro, {
+                type: 'line',
+                data: {
+                    labels: JSON.parse('{{ meses_labels_grafico|escapejs }}'),
+                    datasets: [
+                        {
+                            label: 'Faturamento (R$)',
+                            data: JSON.parse('{{ faturamento_mensal_grafico|escapejs }}'),
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 4
+                        },
+                        {
+                            label: 'Custo de Produção (R$)',
+                            data: JSON.parse('{{ custos_mensais_grafico|escapejs }}'),
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.05)',
+                            borderWidth: 2, fill: true, tension: 0.4, pointRadius: 4
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // Gráfico de Origem das Perdas (Doughnut)
+        const ctxPerdas = document.getElementById('motivosPerdaChart');
+        if (ctxPerdas) {
+            new Chart(ctxPerdas, {
+                type: 'doughnut',
+                data: {
+                    labels: JSON.parse('{{ nomes_motivos_grafico|escapejs }}'),
+                    datasets: [{
+                        data: JSON.parse('{{ valores_motivos_grafico|escapejs }}'),
+                        // Cores chamativas e modernas para alertar sobre perdas
+                        backgroundColor: ['#dc3545', '#ffc107', '#fd7e14', '#6f42c1', '#d63384'],
+                        borderColor: '#1e1f20', // Cor de fundo do card para dar o efeito de corte
+                        borderWidth: 2
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            position: 'right', 
+                            labels: { color: '#c4c7c5', boxWidth: 15 } 
+                        } 
+                    } 
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

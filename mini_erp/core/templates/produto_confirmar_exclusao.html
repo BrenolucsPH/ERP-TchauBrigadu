@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="card shadow-sm border-danger mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Confirmar Exclusão</h5>
+    </div>
+    <div class="card-body text-center">
+        
+        <p>Você tem certeza que deseja excluir o produto <strong>{{ produto.nome }}</strong>?</p>
+        <p class="text-muted small">Esta ação não pode ser desfeita.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="origem" value="{{ request.GET.origem }}">
+            
+            <div class="mt-4 d-flex justify-content-center gap-3">
+                <button type="button" onclick="history.back()" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar
+                </button>
+                <button type="submit" class="btn btn-danger">Sim, Excluir</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

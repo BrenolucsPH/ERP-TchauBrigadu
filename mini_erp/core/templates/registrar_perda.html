@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<style>
+    /* Estilo para escurecer os inputs do Django */
+    .form-dark select, .form-dark input, .form-dark textarea {
+        background-color: #1e1f20 !important;
+        color: #e3e3e3 !important;
+        border: 1px solid #44474a !important;
+    }
+    .form-dark select:focus, .form-dark input:focus, .form-dark textarea:focus {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-trash3 text-danger me-2"></i>Controle de Qualidade e Perdas</h3>
+    </div>
+
+    <div class="row">
+        <!-- Coluna da Esquerda: Formulário de Registro -->
+        <div class="col-md-4 mb-4">
+            <div class="card border-secondary bg-dark shadow-sm h-100">
+                <div class="card-header border-secondary text-danger fw-bold">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Registrar Nova Perda
+                </div>
+                <div class="card-body form-dark">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold small">Produto / Matéria-Prima *</label>
+                            {{ form.produto }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted fw-bold small">Quantidade *</label>
+                                {{ form.quantidade }}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label text-muted fw-bold small">Motivo Principal *</label>
+                                {{ form.motivo }}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold small">Observações / Lote / Detalhes</label>
+                            {{ form.observacao }}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger fw-bold">
+                                <i class="bi bi-check2-circle me-1"></i> Descontar do Estoque
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna da Direita: Histórico de Perdas -->
+        <div class="col-md-8 mb-4">
+            <div class="card border-secondary bg-dark shadow-sm h-100">
+                <div class="card-header border-secondary text-muted fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-1"></i> Últimos Registros</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle mb-0">
+                            <thead class="border-bottom border-secondary text-muted small uppercase">
+                                <tr>
+                                    <th class="ps-4">Data</th>
+                                    <th>Item Perdido</th>
+                                    <th>Qtd.</th>
+                                    <th>Motivo</th>
+                                    <th>Usuário</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for perda in historico_perdas %}
+                                <tr>
+                                    <td class="ps-4 text-muted small">{{ perda.data_registro|date:"d/m/Y H:i" }}</td>
+                                    <td class="fw-bold">{{ perda.produto.nome }}</td>
+                                    <td class="text-danger fw-bold">- {{ perda.quantidade }} un.</td>
+                                    <td><span class="badge bg-secondary text-light">{{ perda.motivo }}</span></td>
+                                    <td class="text-muted small"><i class="bi bi-person-circle me-1"></i>{{ perda.usuario.username|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="bi bi-shield-check fs-1 text-success d-block mb-3"></i>
+                                        Nenhuma perda registrada no sistema!
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

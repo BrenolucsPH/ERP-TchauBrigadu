@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-kanban text-warning me-2"></i>Planejamento de Produção (OP)</h3>
+        <div>
+            {% if request.user.is_superuser or request.user.perfil.tipo == 'Admin' %}
+            <a href="{% url 'auditoria_ops' %}" class="btn btn-outline-info fw-bold me-2">
+                <i class="bi bi-shield-check"></i> Auditoria
+            </a>
+            {% endif %}
+            
+            <button class="btn btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#modalNovaOP">
+                <i class="bi bi-plus-circle"></i> Criar Nova OP
+            </button>
+        </div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="text-light fw-bold mb-0"><i class="bi bi-kanban text-primary me-2"></i>Ordens de Produção</h3>
+            <p class="text-muted small">Gestão do Chão de Fábrica</p>
+        </div>
+        
+        <div>
+            <a href="{% url 'painel_compras' %}" class="btn btn-warning fw-bold shadow-sm">
+                <i class="bi bi-cart-check-fill me-2"></i>Ver Painel de Compras
+            </a> 
+        </div>
+    </div>
+
+    <div class="card bg-dark border-secondary shadow-sm mb-4">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold mb-1"><i class="bi bi-search me-1"></i> Buscar (ID ou Cliente)</label>
+                    <input type="text" name="q" class="form-control bg-black text-light border-secondary" placeholder="Ex: 42 ou Padaria..." value="{{ busca }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small fw-bold mb-1"><i class="bi bi-person-fill me-1"></i> Filtrar por Cliente</label>
+                    <select name="cliente" class="form-select bg-black text-light border-secondary">
+                        <option value="">Todos os Clientes</option>
+                        {% for c in clientes_filtros %}
+                            <option value="{{ c.id }}" {% if cliente_filtro == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small fw-bold mb-1"><i class="bi bi-box-seam me-1"></i> Filtrar por Produto</label>
+                    <select name="produto" class="form-select bg-black text-light border-secondary">
+                        <option value="">Todos os Produtos</option>
+                        {% for p in produtos_filtros %}
+                            <option value="{{ p.id }}" {% if produto_filtro == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-info w-100 fw-bold text-dark"><i class="bi bi-funnel-fill me-1"></i> Filtrar</button>
+                    <a href="{% url 'gestao_ops' %}" class="btn btn-outline-secondary" title="Limpar Filtros"><i class="bi bi-eraser-fill"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row align-items-start">
+        
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-hourglass-split text-danger me-1"></i> PENDENTES</span>
+                    <span class="badge bg-secondary" style="font-size: 0.7rem;">
+                        <i class="bi bi-clock-history"></i> {{ total_horas_estimadas|floatformat:1 }}h total
+                    </span>
+                </div>
+                <div class="card-body p-2" style="min-height: 50vh; background-color: #1a1c1e;">
+                    {% for op in ops_pendentes %}
+                    <div class="card mb-2 bg-black border-danger shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-danger">OP #{{ op.id }}</span>
+                                {% if op.is_atrasada %}
+                                    <small class="text-danger fw-bold"><i class="bi bi-calendar-x-fill"></i> ATRASADA: {{ op.data_prevista|date:"d/m/Y" }}</small>
+                                {% elif op.is_hoje %}
+                                    <small class="text-warning fw-bold"><i class="bi bi-calendar-check-fill"></i> ENTREGA HOJE</small>
+                                {% else %}
+                                    <small class="text-info"><i class="bi bi-calendar-event"></i> {{ op.data_prevista|date:"d/m/Y" }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="small text-secondary mt-2">
+                                <i class="bi bi-person-fill"></i> Autor: 
+                                <span class="text-light fw-bold">
+                                    {% if op.autor %}{{ op.autor.first_name|default:op.autor.username }}{% else %}Sistema{% endif %}
+                                </span>
+                            </div>
+                            
+                            <h6 class="text-light fw-bold mt-2 mb-1">{{ op.quantidade }}x {{ op.produto.nome }}</h6>
+                            {% if op.cliente %}
+                            <div class="mb-1">
+                                <span class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
+                                    <i class="bi bi-person-fill"></i> {{ op.cliente.nome|truncatechars:20 }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3 mt-2">
+                                <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.75rem;">
+                                    <span>Produzido: <strong class="text-success">{{ op.quantidade_produzida|default:"0" }}</strong></span>
+                                    <span>Meta: <strong>{{ op.quantidade }}</strong></span>
+                                </div>
+                                <div class="progress rounded-pill shadow-sm border border-secondary" style="height: 8px; background-color: #1a1c1e;">
+                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {% widthratio op.quantidade_produzida|default:'0' op.quantidade 100 %}%"></div>
+                                </div>
+                            </div>
+                            {% if op.observacao %}<p class="small text-muted mb-2 border-start border-secondary ps-2">{{ op.observacao }}</p>{% endif %}
+                            
+                            <div class="mt-2 p-2 bg-black rounded border border-secondary" style="background-color: #0d0d0d !important;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted" style="font-size: 0.7rem;">CUSTO DE PRODUÇÃO:</small>
+                                    <span class="fw-bold text-warning" style="font-size: 0.85rem;">
+                                        R$ {{ op.custo_total|floatformat:2 }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <a href="{% url 'imprimir_op' op.id %}" target="_blank" class="btn btn-sm btn-outline-light w-100 mb-2">
+                                    <i class="bi bi-printer"></i> Imprimir Nota da OP
+                                </a>
+                                
+                                <a href="{% url 'atualizar_op' op.id 'iniciar' %}" class="btn btn-sm btn-primary w-100 mb-2">
+                                    <i class="bi bi-play-fill"></i> Iniciar Produção
+                                </a>
+                                <div class="d-flex justify-content-between">
+                                    <button class="btn btn-sm btn-outline-info w-50 me-1" data-bs-toggle="modal" data-bs-target="#modalEditarOP{{ op.id }}">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </button>
+                                    <a href="{% url 'atualizar_op' op.id 'cancelar' %}" class="btn btn-sm btn-outline-danger w-50 ms-1" onclick="return confirm('Deseja realmente cancelar esta OP?');">
+                                        <i class="bi bi-x-circle"></i> Cancelar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted mt-3 small">Nenhuma OP pendente.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary text-light fw-bold text-center bg-gradient">
+                    <i class="bi bi-gear-wide-connected text-primary me-1 spin-icon"></i> EM ANDAMENTO (Fábrica)
+                </div>
+                <div class="card-body p-2" style="min-height: 50vh; background-color: #1a1c1e;">
+                    {% for op in ops_andamento %}
+                    <div class="card mb-2 bg-black border-primary shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="badge bg-primary">OP #{{ op.id }}</span>
+                                <small class="text-muted"><i class="bi bi-calendar-event"></i> {{ op.data_prevista|date:"d/m/Y" }}</small>
+                            </div>
+                            <div class="small text-secondary mt-2">
+                                <i class="bi bi-person-fill"></i> Autor: 
+                                <span class="text-light fw-bold">
+                                    {% if op.autor %}{{ op.autor.first_name|default:op.autor.username }}{% else %}Sistema{% endif %}
+                                </span>
+                            </div>
+
+                            <h6 class="text-light fw-bold mt-2 mb-1">{{ op.quantidade }}x {{ op.produto.nome }}</h6>
+                            {% if op.cliente %}
+                            <div class="mb-1">
+                                <span class="badge bg-info text-dark shadow-sm" style="font-size: 0.7rem;">
+                                    <i class="bi bi-person-fill"></i> {{ op.cliente.nome|truncatechars:20 }}
+                                </span>
+                            </div>
+                            {% endif %}
+                            <div class="mb-3 mt-2">
+                                <div class="d-flex justify-content-between text-muted mb-1" style="font-size: 0.75rem;">
+                                    <span>Produzido: <strong class="text-success">{{ op.quantidade_produzida|default:"0" }}</strong></span>
+                                    <span>Meta: <strong>{{ op.quantidade }}</strong></span>
+                                </div>
+                                <div class="progress rounded-pill shadow-sm border border-secondary" style="height: 8px; background-color: #1a1c1e;">
+                                    <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: {% widthratio op.quantidade_produzida|default:'0' op.quantidade 100 %}%"></div>
+                                </div>
+                            </div>
+                            {{ op.semaforo_html|safe }}
+                            
+                            <div class="mt-3 text-end">
+                                <a href="{% url 'imprimir_op' op.id %}" target="_blank" class="btn btn-sm btn-outline-light w-100 mb-2">
+                                    <i class="bi bi-printer"></i> Reimprimir Nota da OP
+                                </a>
+
+                                <button type="button" class="btn btn-primary btn-sm p-1 px-2 fw-bold w-100" data-bs-toggle="modal" data-bs-target="#modalConcluir{{ op.id }}">
+                                    <i class="bi bi-check-all"></i> Concluir e Baixar Estoque
+                                </button>
+                            </div>
+
+                            <div class="modal fade text-start" id="modalConcluir{{ op.id }}" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content bg-dark text-light border-secondary">
+                                        <form action="{% url 'atualizar_op' op.id 'concluir' %}" method="POST">
+                                            {% csrf_token %}
+                                            <div class="modal-header border-secondary">
+                                                <h5 class="modal-title text-success fw-bold"><i class="bi bi-flag-fill me-2"></i>Finalizar OP #{{ op.id }}</h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body form-dark">
+                                                <p>O lote de <strong>{{ op.quantidade }}x {{ op.produto.nome }}</strong> está pronto?</p>
+                                                
+                                                <div class="alert bg-black border border-secondary mt-4">
+                                                    <label class="form-label fw-bold text-light">Houve alguma perda de material no processo?</label>
+                                                    <select class="form-select bg-dark text-light border-secondary mb-2" name="teve_perda" onchange="document.getElementById('divPerdas{{ op.id }}').classList.toggle('d-none', this.value === 'nao')">
+                                                        <option value="nao">Não, produção ocorreu perfeitamente</option>
+                                                        <option value="sim">Sim, tivemos desperdício de material</option>
+                                                    </select>
+
+                                                    <div id="divPerdas{{ op.id }}" class="d-none mt-3 border-top border-secondary pt-3">
+                                                        <label class="form-label text-warning small">Qual insumo foi perdido?</label>
+                                                        <select class="form-select bg-dark text-light border-secondary mb-2" name="insumo_perda_id">
+                                                            {% for insumo in op.insumos_da_receita %}
+                                                                <option value="{{ insumo.id }}">{{ insumo.nome }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-4">
+                                                                <label class="form-label text-warning small">Qtd</label>
+                                                                <input type="number" step="0.01" class="form-control bg-dark text-light border-secondary" name="qtd_perda">
+                                                            </div>
+                                                            <div class="col-8">
+                                                                <label class="form-label text-warning small">Motivo (Opcional)</label>
+                                                                <input type="text" class="form-control bg-dark text-light border-secondary" name="motivo_perda" placeholder="Ex: Rasgou, caiu...">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-secondary">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button>
+                                                <button type="submit" class="btn btn-success fw-bold text-dark">Confirmar Produção</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted mt-3 small">Fábrica livre no momento.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header border-secondary text-light fw-bold text-center bg-gradient">
+                    <i class="bi bi-check-circle text-success me-1"></i> CONCLUÍDAS (Estoque)
+                </div>
+                <div class="card-body p-2" style="min-height: 50vh; background-color: #1a1c1e;">
+                    {% for op in ops_concluidas %}
+                    <div class="card mb-2 bg-black border-success shadow-sm" style="opacity: 0.7;">
+                        <div class="card-body p-2 px-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-success fw-bold small">OP #{{ op.id }}</span>
+                                <small class="text-muted">{{ op.quantidade }}x {{ op.produto.nome }}</small>
+                                {% if op.cliente %}
+                                <div class="mt-1">
+                                    <span class="badge bg-info text-dark" style="font-size: 0.65rem;">
+                                        <i class="bi bi-person-fill"></i> {{ op.cliente.nome|truncatechars:15 }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="small text-secondary mt-1" style="font-size: 0.7rem;">
+                                Por: {% if op.autor %}{{ op.autor.first_name|default:op.autor.username }}{% else %}Sistema{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted mt-3 small">Nenhum histórico recente.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="modalNovaOP" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-warning">
+            <form method="POST"> {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-warning fw-bold"><i class="bi bi-plus-circle me-1"></i> Planejar Nova OP</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    <div class="alert alert-secondary bg-black border-secondary text-muted small py-2 mb-3">
+                        <i class="bi bi-info-circle text-info"></i> O sistema checará o estoque automaticamente ao salvar.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">O que vamos produzir? *</label>
+                            {{ form.produto }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Quantidade *</label>
+                            {{ form.quantidade }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Prazo de Entrega *</label>
+                            {{ form.data_prevista }}
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Cliente Destino (Se houver pedido)</label>
+                            {{ form.cliente }}
+                        </div>
+
+                        <div class="col-md-12 mb-2">
+                            <label class="form-label text-muted small fw-bold mb-1">Observações da OP</label>
+                            {{ form.observacao }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn btn-warning fw-bold text-dark w-100">Criar Ordem de Produção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-dark input, .form-dark select, .form-dark textarea { background-color: #1a1c1e !important; color: white !important; border: 1px solid #444 !important; }
+    .form-dark label { font-size: 0.85rem; color: #adb5bd; margin-top: 10px; font-weight: bold; }
+</style>
+
+{% for op in ops_pendentes %}
+<div class="modal fade" id="modalEditarOP{{ op.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <form method="POST" action="{% url 'editar_op_rapida' op.id %}">
+                {% csrf_token %}
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fw-bold text-info"><i class="bi bi-pencil-square me-2"></i>Editar OP #{{ op.id }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body form-dark">
+                    <p class="text-muted small">Produto: <strong>{{ op.produto.nome }}</strong></p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Nova Quantidade a Produzir</label>
+                        <input type="number" name="quantidade" value="{{ op.quantidade }}" class="form-control bg-black text-light border-secondary" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Nova Data Prevista</label>
+                        <input type="date" name="data_prevista" value="{{ op.data_prevista|date:'Y-m-d' }}" class="form-control bg-black text-light border-secondary" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="submit" class="btn btn-info fw-bold text-dark w-100">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

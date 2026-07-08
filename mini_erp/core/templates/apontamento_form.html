@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<style>
+    .form-dark input, .form-dark select, .form-dark textarea {
+        background-color: #1e1f20 !important;
+        color: #e3e3e3 !important;
+        border: 1px solid #44474a !important;
+        border-radius: 8px;
+        padding: 10px 15px;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .form-dark input:focus, .form-dark select:focus {
+        border-color: #0d6efd !important;
+        outline: none;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .form-dark label { font-weight: 500; margin-bottom: 6px; color: #c4c7c5; font-size: 0.9rem; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+    <h3 class="fw-bold mb-0"><i class="bi bi-hammer text-primary me-2"></i> Apontar Produção</h3>
+    <a href="{% url 'painel' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Voltar</a>
+</div>
+
+<div class="card border-secondary bg-dark shadow-sm form-dark" style="max-width: 500px; margin: 0 auto;">
+    <div class="card-body p-4">
+        
+        <div class="alert alert-info bg-primary bg-opacity-10 border-primary border-opacity-25 text-light mb-4 text-center">
+            <i class="bi bi-info-circle me-2 text-primary"></i>
+            Informe o produto fabricado e a quantidade. Os insumos serão baixados automaticamente!
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+            
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-primary btn-lg fs-6">
+                    <i class="bi bi-plus-circle me-1"></i> Registrar Produção
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
