@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso - Tchau Brigadu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        /* Fundo Gradiente Escuro Moderno */
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #161b22 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+        
+        /* O "Cartão" de Login com efeito de Vidro */
+        .login-card {
+            background: rgba(30, 30, 30, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        /* Cabeçalho do Cartão */
+        .login-header {
+            background: linear-gradient(90deg, #0dcaf0 0%, #0a58ca 100%);
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        /* Efeito de onda no cabeçalho */
+        .login-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: rgba(30, 30, 30, 0.85);
+            clip-path: polygon(0 100%, 100% 100%, 100% 0, 0 100%);
+        }
+
+        .login-icon {
+            font-size: 3.5rem;
+            color: white;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        /* Campos de digitação (Inputs) */
+        .form-control {
+            background-color: #121212;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 14px 15px;
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus {
+            background-color: #1a1a1a;
+            border-color: #0dcaf0;
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.15);
+        }
+        
+        .input-group-text {
+            background-color: #121212;
+            border: 1px solid #333;
+            color: #6c757d;
+            border-right: none;
+        }
+        
+        .form-control { border-left: none; }
+
+        /* Botão de Entrar */
+        .btn-login {
+            background: linear-gradient(90deg, #0dcaf0 0%, #0a58ca 100%);
+            border: none;
+            padding: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 202, 240, 0.4);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8 col-lg-5">
+                
+                <div class="login-card">
+                    <div class="login-header">
+                        <i class="bi bi-hexagon-fill login-icon"></i>
+                        <h3 class="text-white fw-bold mb-0">Tchau Brigadu</h3>
+                        <p class="text-light opacity-75 small mb-0 mt-1">SISTEMA ERP CORPORATIVO</p>
+                    </div>
+                    
+                    <div class="card-body p-4 p-md-5">
+                        <h5 class="text-light fw-bold mb-4 text-center">Acesse sua conta</h5>
+                        
+                        {% if form.errors or messages %}
+                            <div class="alert alert-danger bg-danger text-white border-0 small py-2 d-flex align-items-center mb-4">
+                                <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                                <span>Usuário ou senha inválidos. Tente novamente.</span>
+                            </div>
+                        {% endif %}
+                        
+                        <form method="POST" action="{% url 'login' %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Usuário</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                    <input type="text" name="username" class="form-control" placeholder="Digite seu login" required autofocus>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-5">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Senha</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-shield-lock-fill"></i></span>
+                                    <input type="password" name="password" class="form-control" placeholder="Digite sua senha" required>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-login w-100 text-white rounded-3 shadow">
+                                ENTRAR NO SISTEMA <i class="bi bi-box-arrow-in-right ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent border-0 text-center pb-4 pt-0">
+                        <small class="text-secondary"><i class="bi bi-shield-check me-1"></i> Acesso Restrito e Monitorado</small>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

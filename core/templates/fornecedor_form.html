@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-secondary bg-dark shadow">
+                <div class="card-header border-secondary text-light fw-bold">
+                    <i class="bi bi-truck me-2"></i> Cadastrar Novo Fornecedor
+                </div>
+                <div class="card-body form-dark">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Razão Social ou Nome Fantasia</label>
+                            {{ form.nome }} </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">CNPJ ou CPF</label>
+                            {{ form.cnpj_cpf }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Inscrição Estadual (IE)</label>
+                            {{ form.inscricao_estadual }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Telefone</label>
+                            {{ form.telefone }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">E-mail</label>
+                            {{ form.email }}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">CEP</label>
+                            {{ form.cep }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Rua, Número, Bairro</label>
+                            {{ form.endereco }}
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Cidade</label>
+                            {{ form.cidade }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Estado</label>
+                            {{ form.estado }}
+                        </div>
+                        
+                        <div class="col-md-12 mb-2">
+                            <label class="form-label text-muted small fw-bold mb-1">Observações / Dados Bancários</label>
+                            {{ form.observacao }}
+                        </div>
+                    </div>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'registrar_compra' %}" class="btn btn-outline-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Salvar Fornecedor</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Força todos os inputs a terem o mesmo visual e largura total */
+    .form-dark input, .form-dark select, .form-dark textarea { 
+        width: 100% !important; 
+        padding: 0.6rem !important;
+        border-radius: 0.375rem !important;
+        background-color: #1a1c1e !important; 
+        color: white !important; 
+        border: 1px solid #444 !important; 
+        box-shadow: none !important;
+    }
+    
+    /* Brilho azul ao clicar no campo */
+    .form-dark input:focus, .form-dark select:focus, .form-dark textarea:focus {
+        border-color: #0d6efd !important;
+        outline: none;
+    }
+
+    /* Esconde aqueles textos de ajuda nativos do Django que bagunçam o layout */
+    .form-dark .helptext {
+        display: none;
+    }
+</style>
+{% endblock %}

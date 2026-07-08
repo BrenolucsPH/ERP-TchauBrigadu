@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+
+{% block conteudo %}
+<div class="container-fluid py-4">
+   <!-- Cabeçalho da Página -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="text-light fw-bold"><i class="bi bi-currency-dollar text-success me-2"></i>Gestão Comercial</h3>
+        <div>
+            <!-- Botão de Novo Cliente -->
+            <button type="button" class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#modalNovoCliente">
+                <i class="bi bi-person-plus"></i> Novo Cliente
+            </button>
+            
+            <!-- Botão Único e Correto de Registrar Venda -->
+            <a href="{% url 'registrar_venda' %}" class="btn btn-success fw-bold">
+                <i class="bi bi-cart-plus"></i> Registrar Venda
+            </a>
+        </div>
+    </div>
+    
+    <!-- Tabela de Vendas -->
+    <div class="card border-secondary bg-dark shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-borderless align-middle mb-0">
+                    <thead class="border-bottom border-secondary text-muted">
+                        <tr>
+                            <th class="ps-4">Cód. Venda</th>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Total (R$)</th>
+                            <th class="text-end pe-4">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for venda in vendas %}
+                        <tr>
+                            <td class="ps-4"><span class="badge bg-secondary">#{{ venda.id }}</span></td>
+                            <td>{{ venda.data_venda|date:"d/m/Y H:i" }}</td>
+                            <td><strong>{{ venda.cliente.nome }}</strong></td>
+                            <td class="text-success fw-bold">R$ {{ venda.total_venda|floatformat:2 }}</td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-outline-info btn-sm" title="Ver Detalhes"><i class="bi bi-eye"></i></button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 text-secondary d-block mb-3"></i>
+                                Nenhuma venda registrada ainda.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL NOVO CLIENTE (Fora de qualquer tabela) -->
+<!-- ========================================== -->
+<div class="modal fade" id="modalNovoCliente" tabindex="-1" aria-labelledby="modalNovoClienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border-secondary shadow-lg">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-light fw-bold" id="modalNovoClienteLabel"><i class="bi bi-person-badge me-2 text-info"></i>Cadastrar Novo Cliente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form action="{% url 'novo_cliente_rapido' %}" method="POST">
+                {% csrf_token %}
+                
+                <div class="modal-body form-dark">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Nome da Loja/Cliente *</label>
+                            {{ form_cliente.nome }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">CNPJ ou CPF</label>
+                            {{ form_cliente.cnpj_cpf }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Inscrição Estadual (IE)</label>
+                            {{ form_cliente.inscricao_estadual }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Telefone</label>
+                            {{ form_cliente.telefone }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">E-mail</label>
+                            {{ form_cliente.email }}
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">CEP</label>
+                            {{ form_cliente.cep }}
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Endereço (Rua, Bairro...)</label>
+                            {{ form_cliente.endereco }}
+                        </div>
+                        
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Cidade</label>
+                            {{ form_cliente.cidade }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label text-muted small fw-bold mb-1">Estado</label>
+                            {{ form_cliente.estado }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info fw-bold text-dark"><i class="bi bi-check-lg"></i> Salvar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Força todos os inputs a terem o mesmo visual, cor escura e largura total */
+    .form-dark input, .form-dark select, .form-dark textarea { 
+        width: 100% !important; 
+        padding: 0.6rem !important;
+        border-radius: 0.375rem !important;
+        background-color: #1a1c1e !important; 
+        color: white !important; 
+        border: 1px solid #444 !important; 
+        box-shadow: none !important;
+    }
+    
+    /* Brilho azul ao clicar no campo */
+    .form-dark input:focus, .form-dark select:focus, .form-dark textarea:focus {
+        border-color: #0d6efd !important;
+        outline: none;
+    }
+
+    /* Esconde aqueles textos de ajuda nativos do Django */
+    .form-dark .helptext {
+        display: none;
+    }
+    
+    /* Ajuste interno do modal para dar espaço */
+    .form-dark .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .form-dark textarea {
+        height: 42px !important;
+        min-height: 42px !important;
+    }
+</style>
+{% endblock %}
